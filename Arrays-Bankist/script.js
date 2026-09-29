@@ -74,7 +74,6 @@ const displayMovements = function(movements) {
           <div class="movements__value">${mov}</div>
         </div>
     `;
-
     containerMovements.insertAdjacentHTML('afterbegin', html);
   });
 };
@@ -93,5 +92,61 @@ const currencies = new Map([
 ]);
 
 const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+
+const errToUsd = 1.1;
+
+//PIPELINE 
+const totalDepositsUSD = movements.filter(mov => mov > 0)
+         .map(mov => mov * errToUsd)
+         .reduce((acc, mov) => acc + mov, 0);
+
+console.log(totalDepositsUSD);    
+
+//func expression
+const createUserName = function(accs) {
+  accs.forEach(acc => {
+    acc.username = acc.owner.toLocaleLowerCase().split(' ').map(word => word[0]).join('');
+  })
+}
+createUserName(accounts)
+
+const calcDisplayBalance = function(movements) {
+  const balance = movements.reduce((acc, mov) => acc + mov, 0);
+  labelBalance.textContent = `${balance} EUR`
+}
+
+calcDisplayBalance(account1.movements)
+
+//filter with callback regular function
+//i : index
+//arr: entire array
+const withdrawals = movements.filter(function(mov, i, arr) {
+  return mov < 0
+});
+
+//reduce method: all the elements in an array boils down to single value
+//first param: accumulator (snowball)
+//second param: initial value of accumulator
+const balance = movements.reduce(function(acc, curr, i , array){
+console.log(`iteration no ${i} ${acc} ${curr}`);
+ return acc + curr;
+}, 0)
+
+//arrow function version
+// const balance2 = movements.reduce((acc, curr) => acc + curr, 0)
+
+
+console.log(balance);
+
+//maximum value
+const maxValue = movements.reduce((max, mov, i, array) => {
+  if(mov > max) {
+    max = mov
+  }
+  return max;
+}, movements[0])
+
+console.log(`max value ${maxValue}`)
+
 
 /////////////////////////////////////////////////
