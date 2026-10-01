@@ -64,14 +64,14 @@ const inputClosePin = document.querySelector('.form__input--pin');
 //global context
 
 //Function expression
-const displayMovements = function(movements) {
+const displayMovements = function (movements) {
   containerMovements.innerHTML = '';
-  movements.forEach(function(mov, i) {
+  movements.forEach(function (mov, i) {
     const transactionType = mov > 0 ? 'deposit' : 'withdrawal';
     const html = `
     <div class="movements__row">
-          <div class="movements__type movements__type--${transactionType}">${i+1} ${transactionType}</div>
-          <div class="movements__value">${mov}</div>
+          <div class="movements__type movements__type--${transactionType}">${i + 1} ${transactionType}</div>
+          <div class="movements__value">${mov}€</div>
         </div>
     `;
     containerMovements.insertAdjacentHTML('afterbegin', html);
@@ -96,40 +96,91 @@ const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
 const errToUsd = 1.1;
 
 //PIPELINE 
-const totalDepositsUSD = movements.filter(mov => mov > 0)
-         .map(mov => mov * errToUsd)
-         .reduce((acc, mov) => acc + mov, 0);
+// const totalDepositsUSD = movements.filter(mov => mov > 0)
+//   .map(mov => mov * errToUsd)
+//   .reduce((acc, mov) => acc + mov, 0);
 
-console.log(totalDepositsUSD);    
+// console.log(totalDepositsUSD);
+
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements.filter(mov => mov > 0)
+    .reduce((acc, mov) => acc + mov, 0);
+    labelSumIn.textContent = `${incomes}€`
+
+  const out = acc.movements.filter(mov => mov < 0)
+  .reduce((acc, mov) =>  acc + mov, 0);
+  console.log('out', out)
+  labelSumOut.textContent = `${Math.abs(out)}€`;
+
+  const interest = acc.movements
+  .filter(mov => mov > 0)
+  .map(deposit => (deposit * acc.interestRate)/100)
+  .filter((int, i, arr) => {
+      return int > 1;
+  })
+  .reduce((acc, int) => acc + int, 0);
+  labelSumInterest.textContent = `${interest}€`;
+}
 
 //func expression
-const createUserName = function(accs) {
+const createUserName = function (accs) {
   accs.forEach(acc => {
     acc.username = acc.owner.toLocaleLowerCase().split(' ').map(word => word[0]).join('');
   })
 }
 createUserName(accounts)
 
-const calcDisplayBalance = function(movements) {
+const calcDisplayBalance = function (movements) {
   const balance = movements.reduce((acc, mov) => acc + mov, 0);
-  labelBalance.textContent = `${balance} EUR`
+  labelBalance.textContent = `${balance} €`
 }
 
 calcDisplayBalance(account1.movements)
 
+//Implement Login
+//Event handler
+let currentAccount;
+btnLogin.addEventListener('click', function (e) {
+  //prevent form from submittin
+  e.preventDefault();
+
+  currentAccount = accounts.find(acc => acc.username === inputLoginUsername.value);
+  console.log(currentAccount);
+
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    //display UI and welcome msg
+    labelWelcome.textContent = `Welcome back, ${currentAccount.owner.split(' ')[0]}`
+    containerApp.style.opacity = 100;
+
+    //clear input fields
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginPin.blur();
+
+    //display movements
+    displayMovements(currentAccount.movements);
+
+    //display balance
+    calcDisplayBalance(currentAccount.movements);
+    
+    //display summary
+    calcDisplaySummary(currentAccount)
+  }
+})
+
+
 //filter with callback regular function
 //i : index
 //arr: entire array
-const withdrawals = movements.filter(function(mov, i, arr) {
+const withdrawals = movements.filter(function (mov, i, arr) {
   return mov < 0
 });
 
 //reduce method: all the elements in an array boils down to single value
 //first param: accumulator (snowball)
 //second param: initial value of accumulator
-const balance = movements.reduce(function(acc, curr, i , array){
-console.log(`iteration no ${i} ${acc} ${curr}`);
- return acc + curr;
+const balance = movements.reduce(function (acc, curr, i, array) {
+  console.log(`iteration no ${i} ${acc} ${curr}`);
+  return acc + curr;
 }, 0)
 
 //arrow function version
@@ -140,13 +191,20 @@ console.log(balance);
 
 //maximum value
 const maxValue = movements.reduce((max, mov, i, array) => {
-  if(mov > max) {
+  if (mov > max) {
     max = mov
   }
   return max;
 }, movements[0])
 
-console.log(`max value ${maxValue}`)
+
+
+//find method
+const firstWithdrawal = movements.find(mov => mov < 0);
+
+// const account = accounts.find(acc => acc.owner === 'Jessica Davis');
+// console.log(account);
+
 
 
 /////////////////////////////////////////////////
