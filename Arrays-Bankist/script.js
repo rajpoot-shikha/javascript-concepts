@@ -102,23 +102,34 @@ const errToUsd = 1.1;
 
 // console.log(totalDepositsUSD);
 
+const updateUI = function (acc) {
+  //display movements
+  displayMovements(acc.movements);
+
+  //display balance
+  calcDisplayBalance(acc);
+
+  //display summary
+  calcDisplaySummary(acc)
+}
+
 const calcDisplaySummary = function (acc) {
   const incomes = acc.movements.filter(mov => mov > 0)
     .reduce((acc, mov) => acc + mov, 0);
-    labelSumIn.textContent = `${incomes}€`
+  labelSumIn.textContent = `${incomes}€`
 
   const out = acc.movements.filter(mov => mov < 0)
-  .reduce((acc, mov) =>  acc + mov, 0);
+    .reduce((acc, mov) => acc + mov, 0);
   console.log('out', out)
   labelSumOut.textContent = `${Math.abs(out)}€`;
 
   const interest = acc.movements
-  .filter(mov => mov > 0)
-  .map(deposit => (deposit * acc.interestRate)/100)
-  .filter((int, i, arr) => {
+    .filter(mov => mov > 0)
+    .map(deposit => (deposit * acc.interestRate) / 100)
+    .filter((int, i, arr) => {
       return int > 1;
-  })
-  .reduce((acc, int) => acc + int, 0);
+    })
+    .reduce((acc, int) => acc + int, 0);
   labelSumInterest.textContent = `${interest}€`;
 }
 
@@ -130,12 +141,12 @@ const createUserName = function (accs) {
 }
 createUserName(accounts)
 
-const calcDisplayBalance = function (movements) {
-  const balance = movements.reduce((acc, mov) => acc + mov, 0);
-  labelBalance.textContent = `${balance} €`
+const calcDisplayBalance = function (acc) {
+  //create property on account object
+  acc.balance = acc.movements.reduce((sum, mov) => sum + mov, 0);
+  //display
+  labelBalance.textContent = `${acc.balance} €`
 }
-
-calcDisplayBalance(account1.movements)
 
 //Implement Login
 //Event handler
@@ -145,7 +156,6 @@ btnLogin.addEventListener('click', function (e) {
   e.preventDefault();
 
   currentAccount = accounts.find(acc => acc.username === inputLoginUsername.value);
-  console.log(currentAccount);
 
   if (currentAccount?.pin === Number(inputLoginPin.value)) {
     //display UI and welcome msg
@@ -156,16 +166,41 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
 
-    //display movements
-    displayMovements(currentAccount.movements);
-
-    //display balance
-    calcDisplayBalance(currentAccount.movements);
-    
-    //display summary
-    calcDisplaySummary(currentAccount)
+    updateUI(currentAccount);
   }
-})
+});
+
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputTransferAmount.value);
+  const receiverAcc = accounts.find(acc => acc.username === inputTransferTo.value);
+  inputTransferAmount.value = inputTransferTo.value = '';
+
+  //need to check 2 things: 1. amount greater than 0, (enough money)amount lesser than balance.
+  if (amount > 0 &&
+    receiverAcc &&
+    amount <= currentAccount.balance &&
+    receiverAcc?.username !== currentAccount.username) {
+    //doing the transfer
+    currentAccount.movements.push(-amount);
+    receiverAcc.movements.push(amount);
+    //update the ui
+    updateUI(currentAccount);
+  }
+});
+
+btnClose.addEventListener('click', function (e){
+  e.preventDefault();
+  if (inputCloseUsername.value === currentAccount.username && Number(inputClosePin.value) === currentAccount.pin) {
+    const index = accounts.findIndex(acc => acc.username === currentAccount.username);
+    console.log('index', index);
+    //delete account
+    accounts.splice(index, 1);
+    //hide ui
+    containerApp.style.opacity = 0;
+  }
+  inputCloseUsername.value = inputClosePin.value = '';
+});
 
 
 //filter with callback regular function
